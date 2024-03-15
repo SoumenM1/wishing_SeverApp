@@ -1,14 +1,23 @@
 const express = require('express');
+const app = express();
 const nodemailer = require('nodemailer');
 const multer = require('multer');
-const mongoose= require('./db/mongodb')
 const schedule = require('node-schedule');
-const UserInformation = require("./model/model");
 const path=require('path')
-const app = express();
-const port = 3000;
+const mongoose = require("mongoose");
+const UserInformation = require("./model/model");
+mongoose.connect(
+  "mongodb+srv://soumen:k5Uu4iM5vBDdfvqv@cluster0.c5spa4r.mongodb.net/?retryWrites=true&w=majority",
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
+
+const port = 8000;
 app.use(express.json())
 app.set('view engine', 'ejs');
+
 
 const storage = multer.diskStorage({
     destination: function (req, file, callback) {
@@ -22,7 +31,7 @@ const storage = multer.diskStorage({
   
 const upload = multer({ storage: storage });
   
-app.get('/family-wish', (req, res) => {
+app.get('/', (req, res) => {
     res.render('family-wish');
 });
 
@@ -51,7 +60,7 @@ app.post('/submit',upload.single('image'),async(req,res)=>{
     try {
         const { name, email } = req.body;
         const dob = new Date(req.body.dob);
-        const image = req.file ? `/uploads/${req.file.filename}` : null; // Save the image path
+        const image = req.file ? `/uploads/${req.file.filename}` : '-'; // Save the image path
     
         const userInformation = new UserInformation({
           name,
@@ -79,7 +88,7 @@ app.post('/submit',upload.single('image'),async(req,res)=>{
       }
 })
 
-const autoMailSend = async (email,name) =>{
+const autoMailSend = async (email,name,imageUrl) =>{
 let mailTransporter = nodemailer.createTransport({
 	service: 'gmail',
 	auth: {
@@ -136,7 +145,7 @@ const mailDetails = {
     <p>Dear ${name},</p>
     <p>Wishing you a fantastic birthday filled with joy, laughter, and wonderful moments.</p>
     <p><strong>Here's a special <em>birthday wish</em> just for you:</strong></p>
-    <img src="https://firebasestorage.googleapis.com/v0/b/hello-app-ebcf1.appspot.com/o/wishig_img%2F1.jpg?alt=media&token=d2b750fd-6824-4f51-8c66-e6210d50ea1b&_gl=1*1ajauoe*_ga*MTYxNjQwMDEwNi4xNjkyMTU3NzIw*_ga_CW55HF8NVT*MTY5NjY3NzQxNy40Mi4xLjE2OTY2Nzc0NzcuNjAuMC4w" alt="Birthday Image" width="200">
+    <img src=${imageUrl} alt="Birthday Image" width="200">
     <p>Enjoy your day to the fullest!</p>
     <p>Best regards,<br>Your Name</p>
   </div>
@@ -159,26 +168,23 @@ const mailDetails = {
 // autoMailSend()
  async function getAndCheckBirthdays() {
     try {
-      // Get all user information documents from the collection
-      const users = await UserInformation.find({});
-      
-      // Get today's date
+     
+      const users = await UserInformation.find({}); 
       const today = new Date();
-      
-      // Iterate through the users
       users.forEach((user) => {
         // Get the user's date of birth
         const userDob = new Date(user.dob);
         
         // Check if today is the user's birthday
         if (userDob.getMonth() === today.getMonth() && userDob.getDate() === today.getDate()) {
-          console.log(`Today is ${user.name}'s birthday!`);
-          console.log(`Today is ${user.email}'s birthday!`);
+          // console.log(`Today is ${user.name}'s birthday!`);
+          // console.log(`Today is ${user.email}'s birthday!`);
+          // console.log(user.image)
 
           
           // Call the email sending function
         //   sendEmail(user.email, 'Happy Birthday!', 'Wishing you a fantastic day!');
-        autoMailSend(user.email,user.name)
+        autoMailSend(user.email,user.name,user.image)
         }
       });
     } catch (error) {
@@ -186,7 +192,7 @@ const mailDetails = {
       // Handle errors here
     }
   }
-  schedule.scheduleJob('0 0 * * *', () => {
+   schedule.scheduleJob('0 0 * * *', () => {
     getAndCheckBirthdays()
   })
 
