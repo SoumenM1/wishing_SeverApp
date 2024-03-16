@@ -192,7 +192,7 @@ const mailDetails = {
       // Handle errors here
     }
   }
-   schedule.scheduleJob('16 7 * * *', () => {
+   schedule.scheduleJob('25 7 * * *', () => {
     getAndCheckBirthdays()
   })
 
