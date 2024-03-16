@@ -20,9 +20,9 @@ app.set('view engine', 'ejs');
 
 
 const storage = multer.diskStorage({
-    destination: function (req, file, callback) {
-      callback(null, path.join(__dirname, "public", "uploads"));
-    },
+    // destination: function (req, file, callback) {
+    //   callback(null, path.join(__dirname, "public", "uploads"));
+    // },
     filename: function (req, file, callback) {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       callback(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
@@ -192,7 +192,7 @@ const mailDetails = {
       // Handle errors here
     }
   }
-   schedule.scheduleJob('0 0 * * *', () => {
+   schedule.scheduleJob('16 7 * * *', () => {
     getAndCheckBirthdays()
   })
 
